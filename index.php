@@ -16,7 +16,7 @@ include 'includes/header.php';
 ?>
 
 <!-- Hero Section with Modern Design -->
-<div class="hero-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 600px; display: flex; align-items: center; position: relative; overflow: hidden;">
+<div class="hero-section" style="background:  url('assets/images/homeimg.jpg') center/cover no-repeat; min-height: 600px; display: flex; align-items: center; position: relative; overflow: hidden;">
     <div class="position-absolute" style="top: -50px; right: -50px; width: 300px; height: 300px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
     <div class="position-absolute" style="bottom: -80px; left: -80px; width: 400px; height: 400px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.2;"></div>
     
@@ -24,7 +24,7 @@ include 'includes/header.php';
         <div class="row align-items-center">
             <div class="col-lg-6 text-white">
                 <div class="mb-4">
-                    <span class="badge bg-light text-primary mb-3 px-3 py-2">Welcome to jainz</span>
+                   
                 </div>
                 <h1 class="display-3 fw-bold mb-3" style="line-height: 1.2;">Premium Fashion for Everyone</h1>
                 <p class="lead mb-4 opacity-90">Discover exclusive collections curated for style, comfort, and confidence. From timeless classics to trending pieces.</p>
@@ -46,49 +46,7 @@ include 'includes/header.php';
     </div>
 </div>
 
-<!-- Features Section - Top -->
-<div class="py-5" style="background: #f8f9fa;">
-    <div class="container">
-        <div class="row g-4">
-            <div class="col-md-3 col-sm-6">
-                <div class="text-center p-4">
-                    <div class="mb-3" style="font-size: 40px; color: #667eea;">
-                        <i class="fas fa-shipping-fast"></i>
-                    </div>
-                    <h6 class="fw-bold">Free Shipping</h6>
-                    <p class="text-muted small">On orders over $50</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="text-center p-4">
-                    <div class="mb-3" style="font-size: 40px; color: #667eea;">
-                        <i class="fas fa-undo"></i>
-                    </div>
-                    <h6 class="fw-bold">Easy Returns</h6>
-                    <p class="text-muted small">30-day guarantee</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="text-center p-4">
-                    <div class="mb-3" style="font-size: 40px; color: #667eea;">
-                        <i class="fas fa-lock"></i>
-                    </div>
-                    <h6 class="fw-bold">Secure Payment</h6>
-                    <p class="text-muted small">100% protected</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="text-center p-4">
-                    <div class="mb-3" style="font-size: 40px; color: #667eea;">
-                        <i class="fas fa-headset"></i>
-                    </div>
-                    <h6 class="fw-bold">24/7 Support</h6>
-                    <p class="text-muted small">Always here to help</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 <!-- Categories Section - Modern Grid -->
 <div class="container my-5">
@@ -100,23 +58,19 @@ include 'includes/header.php';
         <?php foreach ($categories as $category): ?>
         <div class="col-lg-4 col-md-6">
             <a href="customer/index.php?category=<?php echo $category['category_id']; ?>" class="text-decoration-none">
-                <div class="card border-0 shadow-sm overflow-hidden category-card" style="height: 250px; transition: all 0.3s ease;">
-                    <div class="card-body d-flex flex-column justify-content-end p-4" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); height: 100%;">
-                        <div class="mb-3">
-                            <?php
-                            $icons = [
-                                'Men' => 'fa-male',
-                                'Women' => 'fa-female',
-                                'Kids' => 'fa-child',
-                                'Accessories' => 'fa-gem',
-                                'Footwear' => 'fa-shoe-prints'
-                            ];
-                            $icon = $icons[$category['category_name']] ?? 'fa-tag';
-                            ?>
-                            <i class="fas <?php echo $icon; ?> fa-3x text-primary"></i>
-                        </div>
+                <div class="card border-0 shadow-sm overflow-hidden category-card" style="height: 250px; transition: all 0.3s ease; position: relative;">
+                    <!-- Category Image Background -->
+                    <img src="assets/images/categories/<?php echo strtolower(str_replace(' ', '_', $category['category_name'])); ?>.jpg" 
+                         alt="<?php echo htmlspecialchars($category['category_name']); ?>"
+                         style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;">
+                    
+                    <!-- Overlay -->
+                    
+                    
+                    <!-- Content -->
+                    <div class="card-body d-flex flex-column justify-content-end p-4" style="height: 100%; position: relative; z-index: 1; color: white;">
                         <h5 class="card-title fw-bold"><?php echo htmlspecialchars($category['category_name']); ?></h5>
-                        <p class="card-text text-muted small"><?php echo htmlspecialchars($category['description']); ?></p>
+                        <p class="card-text" style="opacity: 0.9;"><?php echo htmlspecialchars($category['description']); ?></p>
                     </div>
                 </div>
             </a>
