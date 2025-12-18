@@ -10,7 +10,7 @@ define('APP_PATH', BASE_PATH . '/app');
 define('PUBLIC_PATH', BASE_PATH . '/public');
 
 // Define base URL
-define('BASE_URL', 'http://localhost/noreen/');
+define('BASE_URL', 'http://localhost:8080/');
 
 // Define upload directory
 define('UPLOAD_DIR', $_SERVER['DOCUMENT_ROOT'] . '/noreen/assets/images/products/');

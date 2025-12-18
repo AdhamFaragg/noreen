@@ -13,6 +13,58 @@ class CartController extends Controller {
     }
 
     /**
+     * Add item to cart
+     */
+    public function add() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid request']);
+            exit;
+        }
+
+        $productId = (int)($_POST['product_id'] ?? 0);
+        $quantity = (int)($_POST['quantity'] ?? 1);
+
+        if ($productId <= 0 || $quantity <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid product or quantity']);
+            exit;
+        }
+
+        // Get product details
+        $product = $this->productModel->getProductById($productId);
+
+        if (!$product) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Product not found']);
+            exit;
+        }
+
+        // Initialize cart if not exists
+        if (!isset($_SESSION['cart'])) {
+            $_SESSION['cart'] = [];
+        }
+
+        // Add to cart
+        if (isset($_SESSION['cart'][$productId])) {
+            $_SESSION['cart'][$productId]['quantity'] += $quantity;
+        } else {
+            $_SESSION['cart'][$productId] = [
+                'product_id' => $productId,
+                'product_name' => $product['product_name'],
+                'price' => $product['price'],
+                'image' => $product['image'],
+                'quantity' => $quantity
+            ];
+        }
+
+        header('Content-Type: application/json');
+        http_response_code(200);
+        echo json_encode(['success' => true, 'message' => 'Product added to cart']);
+        exit;
+    }
+
+    /**
      * Show cart
      */
     public function index() {

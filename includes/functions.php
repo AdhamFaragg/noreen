@@ -101,7 +101,32 @@ function upload_image($file, $prefix = 'img_') {
     
     // Create directory if not exists
     if (!file_exists($target_dir)) {
-        mkdir($target_dir, 0777, true);
+        if (!mkdir($target_dir, 0777, true)) {
+            return ['success' => false, 'message' => 'Cannot create upload directory.'];
+        }
+    }
+    
+    // Ensure directory is writable
+    if (!is_writable($target_dir)) {
+        chmod($target_dir, 0777);
+    }
+    
+    // Check if file was uploaded without errors
+    if (!isset($file['tmp_name']) || $file['error'] !== UPLOAD_ERR_OK) {
+        $error_msg = 'File upload error.';
+        if (isset($file['error'])) {
+            $upload_errors = [
+                UPLOAD_ERR_INI_SIZE => 'File exceeds PHP upload_max_filesize.',
+                UPLOAD_ERR_FORM_SIZE => 'File exceeds form MAX_FILE_SIZE.',
+                UPLOAD_ERR_PARTIAL => 'File was only partially uploaded.',
+                UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
+                UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder.',
+                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk.',
+                UPLOAD_ERR_EXTENSION => 'File upload stopped by extension.'
+            ];
+            $error_msg = $upload_errors[$file['error']] ?? 'Unknown upload error.';
+        }
+        return ['success' => false, 'message' => $error_msg];
     }
     
     $file_extension = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
@@ -111,7 +136,7 @@ function upload_image($file, $prefix = 'img_') {
     // Check if file is an actual image
     $check = getimagesize($file["tmp_name"]);
     if ($check === false) {
-        return ['success' => false, 'message' => 'File is not an image.'];
+        return ['success' => false, 'message' => 'File is not a valid image.'];
     }
     
     // Check file size (5MB max)
@@ -127,9 +152,10 @@ function upload_image($file, $prefix = 'img_') {
     
     // Upload file
     if (move_uploaded_file($file["tmp_name"], $target_file)) {
+        chmod($target_file, 0644);
         return ['success' => true, 'filename' => $new_filename];
     } else {
-        return ['success' => false, 'message' => 'Error uploading file.'];
+        return ['success' => false, 'message' => 'Failed to move uploaded file. Check directory permissions.'];
     }
 }
 

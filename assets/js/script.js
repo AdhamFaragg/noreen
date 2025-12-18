@@ -61,15 +61,28 @@ function formatPrice(price) {
 function addToCart(productId, quantity = 1, size = '', color = '') {
     showLoading();
     
-    // In a real application, this would be an AJAX call
-    // For now, we'll simulate it with a timeout
-    setTimeout(() => {
+    fetch(BASE_URL + 'cart/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'product_id=' + productId + '&quantity=' + quantity + '&size=' + size + '&color=' + color
+    })
+    .then(response => response.json())
+    .then(data => {
         hideLoading();
-        showToast('Product added to cart!', 'success');
-        
-        // Update cart count in navbar
-        updateCartCount();
-    }, 500);
+        if (data.success) {
+            showToast('Product added to cart!', 'success');
+            updateCartCount();
+        } else {
+            showToast(data.message || 'Failed to add to cart', 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Error:', error);
+        showToast('An error occurred', 'danger');
+    });
 }
 
 // Add to wishlist (AJAX)

@@ -63,18 +63,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $price = $item['discount_price'] ?? $item['price'];
                 $subtotal = $price * $item['quantity'];
                 
+                // Properly escape string values to prevent SQL injection
+                $product_name = mysqli_real_escape_string($conn, $item['product_name']);
+                $size = mysqli_real_escape_string($conn, $item['size']);
+                $color = mysqli_real_escape_string($conn, $item['color']);
+                
                 $item_query = "INSERT INTO order_items (order_id, product_id, product_name, price, quantity, size, color, subtotal) 
-                               VALUES ($order_id, {$item['product_id']}, '{$item['product_name']}', $price, {$item['quantity']}, 
-                               '{$item['size']}', '{$item['color']}', $subtotal)";
-                mysqli_query($conn, $item_query);
+                               VALUES ($order_id, {$item['product_id']}, '$product_name', $price, {$item['quantity']}, 
+                               '$size', '$color', $subtotal)";
+                if (!mysqli_query($conn, $item_query)) {
+                    // Log error for debugging purposes
+                    error_log("Order item insert error: " . mysqli_error($conn));
+                }
                 
                 // Update product stock
-                mysqli_query($conn, "UPDATE products SET stock = stock - {$item['quantity']} WHERE product_id = {$item['product_id']}");
+                $stock_query = "UPDATE products SET stock = stock - {$item['quantity']} WHERE product_id = {$item['product_id']}";
+                if (!mysqli_query($conn, $stock_query)) {
+                    error_log("Product stock update error: " . mysqli_error($conn));
+                }
             }
             
             // Update discount usage
             if ($discount_code) {
-                mysqli_query($conn, "UPDATE discounts SET used_count = used_count + 1 WHERE code = '$discount_code'");
+                $discount_update = "UPDATE discounts SET used_count = used_count + 1 WHERE code = '$discount_code'";
+                if (!mysqli_query($conn, $discount_update)) {
+                    error_log("Discount update error: " . mysqli_error($conn));
+                }
             }
             
             // Clear cart
@@ -85,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             set_message('Order placed successfully! Order #: ' . $order_number, 'success');
             redirect(BASE_URL . 'customer/orders.php');
         } else {
+            error_log("Order insert error: " . mysqli_error($conn));
             set_message('Error placing order. Please try again.', 'error');
         }
     }

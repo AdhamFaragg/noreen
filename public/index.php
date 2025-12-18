@@ -52,7 +52,8 @@ class Router {
             }
         } catch (Exception $e) {
             error_log('Router Error: ' . $e->getMessage());
-            $this->error('An error occurred');
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            $this->error('An error occurred: ' . $e->getMessage());
         }
     }
 

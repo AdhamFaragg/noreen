@@ -5,7 +5,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4 mb-4">
-                    <h5><i class="fas fa-shopping-bag"></i> Fashion Store</h5>
+                    <h5><i class="fas fa-shopping-bag"></i> jainz</h5>
                     <p class="text-muted">Your one-stop destination for trendy and affordable clothing for men, women, and kids.</p>
                     <div class="social-links">
                         <a href="#" class="text-light me-3"><i class="fab fa-facebook fa-lg"></i></a>

@@ -12,7 +12,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
     <div class="container">
         <a class="navbar-brand" href="<?php echo BASE_URL; ?>">
-            <i class="fas fa-shopping-bag"></i> Fashion Store
+            <i class="fas fa-shopping-bag"></i> JAINZ
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>

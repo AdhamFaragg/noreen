@@ -11,7 +11,7 @@ $wishlist_count = get_wishlist_count();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Clothing Store</title>
+    <title>Jainz - Online Clothing Store</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -27,7 +27,7 @@ $wishlist_count = get_wishlist_count();
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
         <div class="container">
             <a class="navbar-brand" href="<?php echo BASE_URL; ?>">
-                <i class="fas fa-shopping-bag"></i> Fashion Store
+                <i class="fas fa-shopping-bag"></i> JAINZ
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>

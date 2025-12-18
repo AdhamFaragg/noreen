@@ -32,6 +32,20 @@ class HomeController extends Controller {
     }
 
     /**
+     * Get cart count (API endpoint)
+     */
+    public function getCartCount() {
+        $count = 0;
+        if (isset($_SESSION['cart'])) {
+            $count = count($_SESSION['cart']);
+        }
+        
+        header('Content-Type: application/json');
+        echo json_encode(['count' => $count]);
+        exit;
+    }
+
+    /**
      * Show contact page
      */
     public function contact() {
