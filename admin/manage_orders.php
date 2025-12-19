@@ -78,7 +78,6 @@ include '../includes/header.php';
                                 <td><span class="badge bg-<?php echo $order['payment_status'] === 'paid' ? 'success' : 'warning'; ?>"><?php echo ucfirst($order['payment_status']); ?></span></td>
                                 <td><?php echo date('M d, Y', strtotime($order['created_at'])); ?></td>
                                 <td>
-                                    <button class="btn btn-sm btn-primary" onclick="viewOrder(<?php echo $order['order_id']; ?>)"><i class="fas fa-eye"></i></button>
                                     <button class="btn btn-sm btn-warning" onclick="editOrder(<?php echo htmlspecialchars(json_encode($order)); ?>)"><i class="fas fa-edit"></i></button>
                                 </td>
                             </tr>

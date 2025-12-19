@@ -72,14 +72,44 @@ include '../includes/header.php';
 
     <div class="row">
         <div class="col-md-5 mb-4">
-            <div class="product-image-container">
-                <?php if ($product['image']): ?>
-                    <img src="<?php echo UPLOAD_URL . $product['image']; ?>" class="img-fluid rounded" alt="<?php echo htmlspecialchars($product['product_name']); ?>">
-                <?php else: ?>
-                    <div class="bg-light p-5 text-center rounded">
-                        <i class="fas fa-image fa-5x text-muted"></i>
+            <!-- Main Image Gallery -->
+            <div class="product-image-container mb-3">
+                <div id="mainImage" style="position: relative; overflow: hidden; border-radius: 8px;">
+                    <?php if ($product['image']): ?>
+                        <img id="mainImg" src="<?php echo UPLOAD_URL . $product['image']; ?>" 
+                             class="img-fluid rounded" 
+                             alt="<?php echo htmlspecialchars($product['product_name']); ?>"
+                             style="width: 100%; height: auto;">
+                    <?php else: ?>
+                        <div class="bg-light p-5 text-center rounded" style="height: 400px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-image fa-5x text-muted"></i>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <!-- Navigation Arrows (hidden if only one image) -->
+                    <div id="imageNavigation" style="display: none; position: absolute; top: 50%; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 10px;">
+                        <button class="btn btn-light btn-sm" onclick="previousImage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="btn btn-light btn-sm" onclick="nextImage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
                     </div>
-                <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Thumbnail Gallery -->
+            <div id="thumbnailGallery" style="display: none;">
+                <div class="row g-2">
+                    <div class="col-3 mb-2">
+                        <img src="<?php echo UPLOAD_URL . $product['image']; ?>" 
+                             class="img-fluid rounded thumbnail-img" 
+                             alt="Main image" 
+                             onclick="changeImage(0)"
+                             style="cursor: pointer; border: 3px solid #667eea; opacity: 0.8;">
+                    </div>
+                    <div id="additionalThumbnails"></div>
+                </div>
             </div>
         </div>
 
@@ -231,3 +261,89 @@ include '../includes/header.php';
 </div>
 
 <?php include '../includes/footer.php'; ?>
+<script>
+// Product Image Gallery Handler
+let currentImageIndex = 0;
+let productImages = [];
+
+<?php 
+// Fetch additional images if using product_images table
+$additional_images_query = "SELECT image_path FROM product_images WHERE product_id = $product_id ORDER BY image_order ASC";
+$additional_images_result = mysqli_query($conn, $additional_images_query);
+$has_additional_images = mysqli_num_rows($additional_images_result) > 0;
+?>
+
+// Initialize images array
+productImages.push('<?php echo UPLOAD_URL . $product['image']; ?>');
+
+<?php 
+if ($has_additional_images) {
+    while ($img = mysqli_fetch_assoc($additional_images_result)) {
+        echo "productImages.push('" . UPLOAD_URL . $img['image_path'] . "');\n";
+    }
+}
+?>
+
+// Initialize gallery
+document.addEventListener('DOMContentLoaded', function() {
+    if (productImages.length > 1) {
+        // Show navigation if multiple images
+        document.getElementById('imageNavigation').style.display = 'flex';
+        document.getElementById('thumbnailGallery').style.display = 'block';
+        
+        // Populate thumbnails
+        const thumbnailContainer = document.getElementById('additionalThumbnails');
+        for (let i = 1; i < productImages.length; i++) {
+            const col = document.createElement('div');
+            col.className = 'col-3 mb-2';
+            col.innerHTML = `
+                <img src="${productImages[i]}" 
+                     class="img-fluid rounded thumbnail-img" 
+                     alt="Image ${i + 1}" 
+                     onclick="changeImage(${i})"
+                     style="cursor: pointer; border: 3px solid transparent; opacity: 0.7;">
+            `;
+            thumbnailContainer.appendChild(col);
+        }
+    }
+});
+
+function changeImage(index) {
+    if (index >= 0 && index < productImages.length) {
+        currentImageIndex = index;
+        document.getElementById('mainImg').src = productImages[index];
+        updateThumbnailSelection();
+    }
+}
+
+function nextImage() {
+    currentImageIndex = (currentImageIndex + 1) % productImages.length;
+    changeImage(currentImageIndex);
+}
+
+function previousImage() {
+    currentImageIndex = (currentImageIndex - 1 + productImages.length) % productImages.length;
+    changeImage(currentImageIndex);
+}
+
+function updateThumbnailSelection() {
+    const thumbnails = document.querySelectorAll('.thumbnail-img');
+    thumbnails.forEach((thumb, idx) => {
+        if (idx === currentImageIndex) {
+            thumb.style.borderColor = '#667eea';
+            thumb.style.opacity = '1';
+        } else {
+            thumb.style.borderColor = 'transparent';
+            thumb.style.opacity = '0.7';
+        }
+    });
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(event) {
+    if (productImages.length > 1) {
+        if (event.key === 'ArrowRight') nextImage();
+        if (event.key === 'ArrowLeft') previousImage();
+    }
+});
+</script>

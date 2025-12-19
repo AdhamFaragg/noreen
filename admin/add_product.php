@@ -1,6 +1,7 @@
 <?php
 require_once '../db/config.php';
 require_once '../includes/functions.php';
+require_once '../includes/product_images_functions.php';
 
 require_login();
 require_admin();
@@ -70,6 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $query .= " WHERE product_id = $product_id";
             
             if (mysqli_query($conn, $query)) {
+                // Handle additional product images
+                if (isset($_FILES['additional_images']) && is_array($_FILES['additional_images']['name']) && $_FILES['additional_images']['name'][0] !== '') {
+                    handle_product_image_uploads($product_id, $_FILES['additional_images']);
+                }
+                
                 set_message('Product updated successfully!', 'success');
                 redirect(BASE_URL . 'admin/manage_products.php');
             } else {
@@ -80,6 +86,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                       VALUES ($category_id, '$product_name', '$description', $price, " . ($discount_price ? $discount_price : 'NULL') . ", $stock, '$sizes', '$colors', '$image_filename', '$status', $featured)";
             
             if (mysqli_query($conn, $query)) {
+                $new_product_id = mysqli_insert_id($conn);
+                
+                // Handle additional product images
+                if (isset($_FILES['additional_images']) && is_array($_FILES['additional_images']['name']) && $_FILES['additional_images']['name'][0] !== '') {
+                    handle_product_image_uploads($new_product_id, $_FILES['additional_images']);
+                }
+                
                 set_message('Product added successfully!', 'success');
                 redirect(BASE_URL . 'admin/manage_products.php');
             } else {
@@ -249,7 +262,7 @@ include '../includes/header.php';
 
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="image" class="form-label">Product Image</label>
+                                    <label for="image" class="form-label">Main Product Image</label>
                                     <?php if ($is_edit && $product['image']): ?>
                                         <div class="mb-2">
                                             <img src="<?php echo UPLOAD_URL . $product['image']; ?>" 
@@ -259,10 +272,38 @@ include '../includes/header.php';
                                     <input type="file" class="form-control" id="image" name="image" accept="image/*">
                                     <small class="text-muted">Max 5MB. Allowed: JPG, PNG, GIF, WEBP</small>
                                 </div>
+
+                                <div class="mb-3">
+                                    <label for="additional_images" class="form-label">Additional Images</label>
+                                    <input type="file" class="form-control" id="additional_images" name="additional_images[]" 
+                                           accept="image/*" multiple>
+                                    <small class="text-muted">Select multiple images to add to product gallery. Max 5MB each.</small>
+                                    
+                                    <?php if ($is_edit && $product_id > 0): ?>
+                                        <div class="mt-3">
+                                            <label class="form-label">Current Additional Images</label>
+                                            <div id="existingImages" class="row g-2">
+                                                <?php
+                                                $additional = get_product_images($product_id);
+                                                if ($additional && mysqli_num_rows($additional) > 0) {
+                                                    while ($img = mysqli_fetch_assoc($additional)) {
+                                                        echo '<div class="col-6 position-relative">';
+                                                        echo '<img src="' . UPLOAD_URL . htmlspecialchars($img['image_path']) . '" class="img-fluid img-thumbnail" alt="Product Image">';
+                                                        echo '<button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0" onclick="deleteImage(' . $img['image_id'] . ')" style="margin: 5px;"><i class="fas fa-trash"></i></button>';
+                                                        echo '</div>';
+                                                    }
+                                                } else {
+                                                    echo '<p class="text-muted">No additional images yet.</p>';
+                                                }
+                                                ?>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="text-end">
+                        <div class="text-end mt-4 mb-3">
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="fas fa-save"></i> <?php echo $is_edit ? 'Update' : 'Add'; ?> Product
                             </button>
@@ -273,6 +314,51 @@ include '../includes/header.php';
         </main>
     </div>
 </div>
+
+<script>
+function deleteImage(imageId) {
+    if (confirm('Are you sure you want to delete this image?')) {
+        fetch('<?php echo BASE_URL; ?>admin/delete_product_image.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'image_id=' + imageId
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error deleting image: ' + data.message);
+            }
+        });
+    }
+}
+
+// Preview multiple images
+document.getElementById('additional_images')?.addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview') || document.createElement('div');
+    if (!document.getElementById('imagePreview')) {
+        preview.id = 'imagePreview';
+        preview.className = 'row g-2 mt-2';
+        this.parentNode.appendChild(preview);
+    }
+    
+    preview.innerHTML = '';
+    
+    for (let file of e.target.files) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const col = document.createElement('div');
+            col.className = 'col-6';
+            col.innerHTML = '<img src="' + event.target.result + '" class="img-fluid img-thumbnail" alt="Preview">';
+            preview.appendChild(col);
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
 
 <style>
 .sidebar {

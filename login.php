@@ -101,10 +101,7 @@ include 'includes/header.php';
                     
                     <hr>
                     
-                    <div class="alert alert-info mb-0">
-                        <strong>Test Credentials:</strong><br>
-                        Admin: admin / admin123
-                    </div>
+                    
                 </div>
             </div>
         </div>

@@ -219,7 +219,7 @@ include '../includes/header.php';
                                     </td>
                                     <td><?php echo date('M d, Y', strtotime($order['created_at'])); ?></td>
                                     <td>
-                                        <a href="view_order.php?id=<?php echo $order['order_id']; ?>" class="btn btn-sm btn-primary">
+                                        <a href="manage_orders.php?id=<?php echo $order['order_id']; ?>" class="btn btn-sm btn-primary">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                     </td>

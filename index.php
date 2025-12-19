@@ -150,7 +150,7 @@ include 'includes/header.php';
 
 <!-- Call to Action Section -->
 <div class="container my-5">
-    <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); overflow: hidden;">
+    <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #c9952cff 0%, #000000ff 100%); overflow: hidden;">
         <div class="row align-items-center">
             <div class="col-lg-7 text-white p-5">
                 <h3 class="fw-bold mb-3">Exclusive Offers & Updates</h3>
