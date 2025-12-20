@@ -19,8 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = sanitize_input($_POST['username']);
     $password = $_POST['password'];
     
+    // Server-side validation
     if (empty($username) || empty($password)) {
         $error = 'Please fill in all fields.';
+    } elseif (strlen($username) < 2) {
+        $error = 'Username must be at least 2 characters long.';
+    } elseif (strlen($password) < 1) {
+        $error = 'Password cannot be empty.';
     } else {
         $query = "SELECT * FROM users WHERE (username = '$username' OR email = '$username') AND status = 'active'";
         $result = mysqli_query($conn, $query);
@@ -71,16 +76,22 @@ include 'includes/header.php';
                         <div class="alert alert-danger"><?php echo $error; ?></div>
                     <?php endif; ?>
                     
-                    <form method="POST" action="">
+                    <form method="POST" action="" novalidate>
                         <div class="mb-3">
-                            <label for="username" class="form-label">Username or Email</label>
+                            <label for="username" class="form-label">Username or Email <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="username" name="username" 
-                                   value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>" required>
+                                   value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>" 
+                                   minlength="2" maxlength="100" required
+                                   pattern="[a-zA-Z0-9._@-]+"
+                                   title="Username must contain only letters, numbers, dots, underscores, hyphens, or @">
+                            <div class="invalid-feedback">Please provide a valid username or email.</div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
+                            <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   minlength="1" required>
+                            <div class="invalid-feedback">Password is required.</div>
                         </div>
                         
                         <div class="mb-3 form-check">

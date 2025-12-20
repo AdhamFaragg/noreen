@@ -21,17 +21,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = sanitize_input($_POST['description']);
     $status = sanitize_input($_POST['status']);
     
-    if ($category_id > 0) {
-        $query = "UPDATE categories SET category_name = '$category_name', description = '$description', status = '$status' WHERE category_id = $category_id";
-        $msg = 'Category updated successfully!';
-    } else {
-        $query = "INSERT INTO categories (category_name, description, status) VALUES ('$category_name', '$description', '$status')";
-        $msg = 'Category added successfully!';
+    // Server-side validation
+    $cat_errors = [];
+    
+    if (empty($category_name) || strlen($category_name) < 2) {
+        $cat_errors[] = 'Category name must be at least 2 characters long.';
+    } elseif (strlen($category_name) > 100) {
+        $cat_errors[] = 'Category name cannot exceed 100 characters.';
     }
     
-    if (mysqli_query($conn, $query)) {
-        set_message($msg, 'success');
-        redirect(BASE_URL . 'admin/manage_categories.php');
+    if (strlen($description) > 500) {
+        $cat_errors[] = 'Description cannot exceed 500 characters.';
+    }
+    
+    if (!in_array($status, ['active', 'inactive'])) {
+        $cat_errors[] = 'Invalid status selected.';
+    }
+    
+    if (empty($cat_errors)) {
+        if ($category_id > 0) {
+            $query = "UPDATE categories SET category_name = '$category_name', description = '$description', status = '$status' WHERE category_id = $category_id";
+            $msg = 'Category updated successfully!';
+        } else {
+            $query = "INSERT INTO categories (category_name, description, status) VALUES ('$category_name', '$description', '$status')";
+            $msg = 'Category added successfully!';
+        }
+        
+        if (mysqli_query($conn, $query)) {
+            set_message($msg, 'success');
+            redirect(BASE_URL . 'admin/manage_categories.php');
+        }
+    } else {
+        foreach ($cat_errors as $error) {
+            set_message($error, 'error');
+        }
     }
 }
 
@@ -100,19 +123,24 @@ include '../includes/header.php';
                 <div class="modal-body">
                     <input type="hidden" name="category_id" id="category_id">
                     <div class="mb-3">
-                        <label class="form-label">Category Name *</label>
-                        <input type="text" class="form-control" name="category_name" id="category_name" required>
+                        <label class="form-label">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="category_name" id="category_name" 
+                               minlength="2" maxlength="100" required>
+                        <small class="text-muted">2-100 characters required</small>
+                        <div class="invalid-feedback">Category name must be 2-100 characters.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>
-                        <textarea class="form-control" name="description" id="description" rows="3"></textarea>
+                        <textarea class="form-control" name="description" id="description" rows="3" maxlength="500"></textarea>
+                        <small class="text-muted">Max 500 characters</small>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select class="form-select" name="status" id="status">
+                        <label class="form-label">Status <span class="text-danger">*</span></label>
+                        <select class="form-select" name="status" id="status" required>
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
+                        <div class="invalid-feedback">Please select a valid status.</div>
                     </div>
                 </div>
                 <div class="modal-footer">

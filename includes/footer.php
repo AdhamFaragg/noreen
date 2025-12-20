@@ -61,6 +61,9 @@
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Form Validation Script -->
+    <script src="<?php echo BASE_URL; ?>assets/js/form-validation.js"></script>
+    
     <!-- Custom JavaScript -->
     <script src="<?php echo BASE_URL; ?>assets/js/script.js"></script>
 </body>

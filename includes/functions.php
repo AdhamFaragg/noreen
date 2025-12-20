@@ -485,6 +485,13 @@ function create_pagination($total_items, $items_per_page, $current_page, $base_u
 function get_product_reviews($product_id) {
     global $conn;
     $product_id = (int)$product_id;
+    
+    // Check if reviews table exists
+    $check_table = mysqli_query($conn, "SHOW TABLES LIKE 'reviews'");
+    if (mysqli_num_rows($check_table) == 0) {
+        return []; // Return empty array if reviews table doesn't exist
+    }
+    
     $query = "SELECT r.*, u.full_name, u.username 
               FROM reviews r 
               JOIN users u ON r.user_id = u.user_id 
@@ -501,6 +508,13 @@ function get_product_reviews($product_id) {
 function get_average_rating($product_id) {
     global $conn;
     $product_id = (int)$product_id;
+    
+    // Check if reviews table exists
+    $check_table = mysqli_query($conn, "SHOW TABLES LIKE 'reviews'");
+    if (mysqli_num_rows($check_table) == 0) {
+        return ['avg_rating' => 0, 'total_reviews' => 0]; // Return zero values if reviews table doesn't exist
+    }
+    
     $query = "SELECT AVG(rating) as avg_rating, COUNT(*) as total_reviews 
               FROM reviews 
               WHERE product_id = $product_id AND status = 'approved'";

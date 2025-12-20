@@ -144,35 +144,40 @@ include '../includes/header.php';
 
             <p><?php echo nl2br(htmlspecialchars($product['description'])); ?></p>
 
-            <form method="POST">
+            <form method="POST" novalidate>
                 <?php if (!empty($sizes)): ?>
                 <div class="mb-3">
-                    <label class="form-label"><strong>Size:</strong></label>
+                    <label class="form-label"><strong>Size: <span class="text-danger">*</span></strong></label>
                     <div class="btn-group" role="group">
                         <?php foreach ($sizes as $size): ?>
                             <input type="radio" class="btn-check" name="size" id="size_<?php echo trim($size); ?>" value="<?php echo trim($size); ?>" required>
                             <label class="btn btn-outline-primary" for="size_<?php echo trim($size); ?>"><?php echo trim($size); ?></label>
                         <?php endforeach; ?>
                     </div>
+                    <div class="invalid-feedback d-block">Please select a size.</div>
                 </div>
                 <?php endif; ?>
 
                 <?php if (!empty($colors)): ?>
                 <div class="mb-3">
-                    <label class="form-label"><strong>Color:</strong></label>
+                    <label class="form-label"><strong>Color: <span class="text-danger">*</span></strong></label>
                     <select class="form-select" name="color" style="max-width: 200px;" required>
                         <option value="">Select Color</option>
                         <?php foreach ($colors as $color): ?>
                             <option value="<?php echo trim($color); ?>"><?php echo trim($color); ?></option>
                         <?php endforeach; ?>
                     </select>
+                    <div class="invalid-feedback d-block">Please select a color.</div>
                 </div>
                 <?php endif; ?>
 
                 <div class="mb-3">
-                    <label class="form-label"><strong>Quantity:</strong></label>
-                    <input type="number" class="form-control" name="quantity" value="1" min="1" max="<?php echo $product['stock']; ?>" style="max-width: 100px;" required>
+                    <label class="form-label"><strong>Quantity: <span class="text-danger">*</span></strong></label>
+                    <input type="number" class="form-control" name="quantity" value="1" 
+                           min="1" max="<?php echo $product['stock']; ?>" 
+                           style="max-width: 100px;" required>
                     <small class="text-muted"><?php echo $product['stock']; ?> available</small>
+                    <div class="invalid-feedback d-block">Quantity must be between 1 and <?php echo $product['stock']; ?>.</div>
                 </div>
 
                 <?php if ($product['stock'] > 0): ?>

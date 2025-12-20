@@ -43,9 +43,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $payment_method = sanitize_input($_POST['payment_method']);
     $notes = sanitize_input($_POST['notes']);
     
-    if (empty($shipping_address) || empty($shipping_phone)) {
-        set_message('Please fill in all required fields.', 'error');
-    } else {
+    // Server-side validation
+    $checkout_errors = [];
+    
+    if (empty($shipping_address) || strlen($shipping_address) < 5) {
+        $checkout_errors[] = 'Please provide a valid shipping address (at least 5 characters).';
+    } elseif (strlen($shipping_address) > 255) {
+        $checkout_errors[] = 'Shipping address cannot exceed 255 characters.';
+    }
+    
+    if (empty($shipping_city) || strlen($shipping_city) < 2) {
+        $checkout_errors[] = 'Please provide a valid city name.';
+    } elseif (strlen($shipping_city) > 50) {
+        $checkout_errors[] = 'City name cannot exceed 50 characters.';
+    }
+    
+    if (empty($shipping_phone) || strlen($shipping_phone) < 7) {
+        $checkout_errors[] = 'Please provide a valid phone number (at least 7 characters).';
+    } elseif (!preg_match('/^[\d\s\-\+\(\)]+$/', $shipping_phone)) {
+        $checkout_errors[] = 'Phone number contains invalid characters.';
+    } elseif (strlen($shipping_phone) > 20) {
+        $checkout_errors[] = 'Phone number cannot exceed 20 characters.';
+    }
+    
+    if (!in_array($payment_method, ['cod', 'online'])) {
+        $checkout_errors[] = 'Please select a valid payment method.';
+    }
+    
+    if (!empty($notes) && strlen($notes) > 500) {
+        $checkout_errors[] = 'Order notes cannot exceed 500 characters.';
+    }
+    
+    if (empty($checkout_errors)) {
         $order_number = generate_order_number();
         $user_id = $_SESSION['user_id'];
         
@@ -99,6 +128,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             set_message('Order placed successfully! Order #: ' . $order_number, 'success');
             redirect(BASE_URL . 'customer/orders.php');
         } else {
+            set_message('Error placing order. Please try again.', 'error');
+        }
+    } else {
+        foreach ($checkout_errors as $error) {
+            set_message($error, 'error');
+        }
+    }
+}
+        } else {
             error_log("Order insert error: " . mysqli_error($conn));
             set_message('Error placing order. Please try again.', 'error');
         }
@@ -119,7 +157,7 @@ include '../includes/header.php';
         <div class="alert alert-danger"><?php echo $discount_error; ?></div>
     <?php endif; ?>
 
-    <form method="POST">
+    <form method="POST" novalidate>
         <div class="row">
             <div class="col-md-7">
                 <div class="card mb-4">
@@ -128,35 +166,49 @@ include '../includes/header.php';
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label">Full Name *</label>
+                            <label class="form-label">Full Name</label>
                             <input type="text" class="form-control" value="<?php echo htmlspecialchars($user['full_name']); ?>" disabled>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Shipping Address *</label>
-                            <textarea class="form-control" name="shipping_address" rows="3" required><?php echo htmlspecialchars($user['address'] ?? ''); ?></textarea>
+                            <label class="form-label">Shipping Address <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="shipping_address" rows="3" minlength="5" maxlength="255" required><?php echo htmlspecialchars($_POST['shipping_address'] ?? ($user['address'] ?? '')); ?></textarea>
+                            <small class="text-muted">5-255 characters required</small>
+                            <div class="invalid-feedback">Please provide a valid shipping address (5-255 characters).</div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">City *</label>
-                                <input type="text" class="form-control" name="shipping_city" value="<?php echo htmlspecialchars($user['city'] ?? ''); ?>" required>
+                                <label class="form-label">City <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="shipping_city" value="<?php echo htmlspecialchars($_POST['shipping_city'] ?? ($user['city'] ?? '')); ?>" minlength="2" maxlength="50" required
+                                       pattern="[a-zA-Z\s'-]+"
+                                       title="City must contain only letters, spaces, hyphens, or apostrophes">
+                                <div class="invalid-feedback">Please provide a valid city name.</div>
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Postal Code</label>
-                                <input type="text" class="form-control" name="shipping_postal_code" value="<?php echo htmlspecialchars($user['postal_code'] ?? ''); ?>">
+                                <input type="text" class="form-control" name="shipping_postal_code" value="<?php echo htmlspecialchars($_POST['shipping_postal_code'] ?? ($user['postal_code'] ?? '')); ?>"
+                                       maxlength="20"
+                                       pattern="[a-zA-Z0-9\s\-]+"
+                                       title="Invalid postal code format">
+                                <div class="invalid-feedback">Please provide a valid postal code.</div>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Phone Number *</label>
-                            <input type="tel" class="form-control" name="shipping_phone" value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>" required>
+                            <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" name="shipping_phone" value="<?php echo htmlspecialchars($_POST['shipping_phone'] ?? ($user['phone'] ?? '')); ?>" 
+                                   minlength="7" maxlength="20" required
+                                   pattern="[\d\s\-\+\(\)]+"
+                                   title="Phone must contain only numbers, spaces, hyphens, plus, or parentheses">
+                            <div class="invalid-feedback">Please provide a valid phone number (7-20 characters).</div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Order Notes (Optional)</label>
-                            <textarea class="form-control" name="notes" rows="2" placeholder="Special instructions for delivery..."></textarea>
+                            <textarea class="form-control" name="notes" rows="2" placeholder="Special instructions for delivery..." maxlength="500"><?php echo htmlspecialchars($_POST['notes'] ?? ''); ?></textarea>
+                            <small class="text-muted">Max 500 characters</small>
                         </div>
                     </div>
                 </div>
@@ -167,7 +219,7 @@ include '../includes/header.php';
                     </div>
                     <div class="card-body">
                         <div class="form-check mb-3">
-                            <input class="form-check-input" type="radio" name="payment_method" id="cod" value="cod" checked>
+                            <input class="form-check-input" type="radio" name="payment_method" id="cod" value="cod" checked required>
                             <label class="form-check-label" for="cod">
                                 <strong>Cash on Delivery</strong><br>
                                 <small class="text-muted">Pay when you receive your order</small>
@@ -175,12 +227,13 @@ include '../includes/header.php';
                         </div>
 
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="payment_method" id="online" value="online">
+                            <input class="form-check-input" type="radio" name="payment_method" id="online" value="online" required>
                             <label class="form-check-label" for="online">
                                 <strong>Online Payment</strong><br>
-                                <small class="text-muted">Pay securely online (Demo only)</small>
+                                <small class="text-muted">Pay securely online</small>
                             </label>
                         </div>
+                        <div class="invalid-feedback d-block">Please select a payment method.</div>
                     </div>
                 </div>
             </div>

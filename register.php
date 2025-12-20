@@ -16,10 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
     $full_name = sanitize_input($_POST['full_name']);
-    $phone = sanitize_input($_POST['phone']);
-    $address = sanitize_input($_POST['address']);
-    $city = sanitize_input($_POST['city']);
-    $postal_code = sanitize_input($_POST['postal_code']);
+    $phone = sanitize_input($_POST['phone'] ?? '');
     
     // Validation
     if (empty($username) || empty($email) || empty($password) || empty($full_name)) {
@@ -28,18 +25,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (strlen($username) < 3) {
         $errors[] = 'Username must be at least 3 characters long.';
+    } elseif (strlen($username) > 50) {
+        $errors[] = 'Username cannot exceed 50 characters.';
+    } elseif (!preg_match('/^[a-zA-Z0-9._-]+$/', $username)) {
+        $errors[] = 'Username can only contain letters, numbers, dots, underscores, and hyphens.';
     }
     
     if (!validate_email($email)) {
         $errors[] = 'Please enter a valid email address.';
+    } elseif (!preg_match('/^[a-zA-Z0-9._%+-]+@gmail\.com$/', $email)) {
+        $errors[] = 'Email must be a Gmail address (@gmail.com).';
+    } elseif (strlen($email) > 100) {
+        $errors[] = 'Email cannot exceed 100 characters.';
     }
     
     if (strlen($password) < 6) {
         $errors[] = 'Password must be at least 6 characters long.';
+    } elseif (strlen($password) > 100) {
+        $errors[] = 'Password cannot exceed 100 characters.';
     }
     
     if ($password !== $confirm_password) {
         $errors[] = 'Passwords do not match.';
+    }
+    
+    if (strlen($full_name) < 2) {
+        $errors[] = 'Full name must be at least 2 characters long.';
+    } elseif (strlen($full_name) > 100) {
+        $errors[] = 'Full name cannot exceed 100 characters.';
+    } elseif (!preg_match('/^[a-zA-Z ]+$/', $full_name)) {
+        $errors[] = 'Full name can only contain letters and spaces.';
+    }
+    
+    if (!empty($phone) && !preg_match('/^[0-9 +()-]+$/', $phone)) {
+        $errors[] = 'Phone number format is invalid.';
     }
     
     // Check if username exists
@@ -56,8 +75,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         $hashed_password = hash_password($password);
         
-        $query = "INSERT INTO users (username, email, password, full_name, phone, address, city, postal_code, role) 
-                  VALUES ('$username', '$email', '$hashed_password', '$full_name', '$phone', '$address', '$city', '$postal_code', 'customer')";
+        // Escape strings for database
+        $username_db = mysqli_real_escape_string($conn, $username);
+        $email_db = mysqli_real_escape_string($conn, $email);
+        $full_name_db = mysqli_real_escape_string($conn, $full_name);
+        $phone_db = mysqli_real_escape_string($conn, $phone);
+        
+        $query = "INSERT INTO users (username, email, password, full_name, phone, role) 
+                  VALUES ('$username_db', '$email_db', '$hashed_password', '$full_name_db', '$phone_db', 'customer')";
         
         if (mysqli_query($conn, $query)) {
             set_message('Registration successful! Please login to continue.', 'success');
@@ -90,62 +115,63 @@ include 'includes/header.php';
                         </div>
                     <?php endif; ?>
                     
-                    <form method="POST" action="">
+                    <form method="POST" action="" novalidate>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="username" class="form-label">Username *</label>
+                                <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="username" name="username" 
-                                       value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>" required>
+                                       value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>" 
+                                       minlength="3" maxlength="50" required
+                                       pattern="[a-zA-Z0-9._-]+"
+                                       title="Username must be 3+ characters with only letters, numbers, dots, underscores, or hyphens">
+                                <div class="invalid-feedback">Username must be at least 3 characters and contain only valid characters.</div>
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label for="email" class="form-label">Email *</label>
+                                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
                                 <input type="email" class="form-control" id="email" name="email" 
-                                       value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required>
+                                       value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" 
+                                       pattern="[a-zA-Z0-9._%+-]+@gmail\.com"
+                                       maxlength="100" required
+                                       title="Email must be a Gmail address (@gmail.com)">
+                                <div class="invalid-feedback">Please provide a valid Gmail address (e.g., user@gmail.com).</div>
                             </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="full_name" class="form-label">Full Name *</label>
+                            <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="full_name" name="full_name" 
-                                   value="<?php echo isset($_POST['full_name']) ? htmlspecialchars($_POST['full_name']) : ''; ?>" required>
+                                   value="<?php echo isset($_POST['full_name']) ? htmlspecialchars($_POST['full_name']) : ''; ?>" 
+                                   minlength="2" maxlength="100" required
+                                   pattern="[a-zA-Z ]+"
+                                   title="Full name must contain only letters and spaces">
+                            <div class="invalid-feedback">Please provide a valid full name (2+ characters).</div>
                         </div>
                         
                         <div class="mb-3">
                             <label for="phone" class="form-label">Phone</label>
                             <input type="tel" class="form-control" id="phone" name="phone" 
-                                   value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''; ?>">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="address" class="form-label">Address</label>
-                            <textarea class="form-control" id="address" name="address" rows="2"><?php echo isset($_POST['address']) ? htmlspecialchars($_POST['address']) : ''; ?></textarea>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="city" class="form-label">City</label>
-                                <input type="text" class="form-control" id="city" name="city" 
-                                       value="<?php echo isset($_POST['city']) ? htmlspecialchars($_POST['city']) : ''; ?>">
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="postal_code" class="form-label">Postal Code</label>
-                                <input type="text" class="form-control" id="postal_code" name="postal_code" 
-                                       value="<?php echo isset($_POST['postal_code']) ? htmlspecialchars($_POST['postal_code']) : ''; ?>">
-                            </div>
+                                   value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''; ?>"
+                                   pattern="[0-9 +()-]+"
+                                   maxlength="20"
+                                   title="Phone must contain only numbers, spaces, hyphens, plus, or parentheses">
+                            <div class="invalid-feedback">Please provide a valid phone number.</div>
                         </div>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="password" class="form-label">Password *</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
+                                <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="password" name="password" 
+                                       minlength="6" maxlength="100" required>
                                 <small class="text-muted">Minimum 6 characters</small>
+                                <div class="invalid-feedback">Password must be at least 6 characters long.</div>
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label for="confirm_password" class="form-label">Confirm Password *</label>
-                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                <label for="confirm_password" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                                       minlength="6" maxlength="100" required>
+                                <div class="invalid-feedback">Passwords must match and be at least 6 characters.</div>
                             </div>
                         </div>
                         

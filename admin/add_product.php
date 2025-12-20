@@ -30,9 +30,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = sanitize_input($_POST['status']);
     $featured = isset($_POST['featured']) ? 1 : 0;
     
-    // Validation
+    // Server-side validation
     if (empty($product_name) || empty($price) || empty($category_id)) {
         $errors[] = 'Please fill in all required fields.';
+    }
+    
+    if (strlen($product_name) < 3) {
+        $errors[] = 'Product name must be at least 3 characters long.';
+    } elseif (strlen($product_name) > 255) {
+        $errors[] = 'Product name cannot exceed 255 characters.';
+    }
+    
+    if ($price <= 0) {
+        $errors[] = 'Price must be greater than 0.';
+    } elseif ($price > 999999.99) {
+        $errors[] = 'Price cannot exceed 999999.99.';
+    }
+    
+    if ($discount_price !== null) {
+        if ($discount_price <= 0) {
+            $errors[] = 'Discount price must be greater than 0.';
+        } elseif ($discount_price >= $price) {
+            $errors[] = 'Discount price must be less than regular price.';
+        }
+    }
+    
+    if ($stock < 0) {
+        $errors[] = 'Stock cannot be negative.';
+    } elseif ($stock > 1000000) {
+        $errors[] = 'Stock value is too high.';
+    }
+    
+    if (!in_array($status, ['active', 'inactive', 'out_of_stock'])) {
+        $errors[] = 'Invalid status selected.';
+    }
+    
+    if (!in_array($category_id, array_column(get_all_categories(), 'category_id'))) {
+        $errors[] = 'Invalid category selected.';
     }
     
     // Handle image upload
@@ -174,23 +208,26 @@ include '../includes/header.php';
 
             <div class="card">
                 <div class="card-body">
-                    <form method="POST" enctype="multipart/form-data">
+                    <form method="POST" enctype="multipart/form-data" novalidate>
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="mb-3">
-                                    <label for="product_name" class="form-label">Product Name *</label>
+                                    <label for="product_name" class="form-label">Product Name <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="product_name" name="product_name" 
-                                           value="<?php echo $is_edit ? htmlspecialchars($product['product_name']) : ''; ?>" required>
+                                           value="<?php echo $is_edit ? htmlspecialchars($product['product_name']) : ''; ?>" 
+                                           minlength="3" maxlength="255" required>
+                                    <div class="invalid-feedback">Product name must be 3-255 characters.</div>
                                 </div>
 
                                 <div class="mb-3">
                                     <label for="description" class="form-label">Description</label>
-                                    <textarea class="form-control" id="description" name="description" rows="4"><?php echo $is_edit ? htmlspecialchars($product['description']) : ''; ?></textarea>
+                                    <textarea class="form-control" id="description" name="description" rows="4" maxlength="2000"><?php echo $is_edit ? htmlspecialchars($product['description']) : ''; ?></textarea>
+                                    <small class="text-muted">Max 2000 characters</small>
                                 </div>
 
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="category_id" class="form-label">Category *</label>
+                                        <label for="category_id" class="form-label">Category <span class="text-danger">*</span></label>
                                         <select class="form-select" id="category_id" name="category_id" required>
                                             <option value="">Select Category</option>
                                             <?php
@@ -201,35 +238,44 @@ include '../includes/header.php';
                                             }
                                             ?>
                                         </select>
+                                        <div class="invalid-feedback">Please select a valid category.</div>
                                     </div>
 
                                     <div class="col-md-6 mb-3">
-                                        <label for="status" class="form-label">Status *</label>
+                                        <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
                                         <select class="form-select" id="status" name="status" required>
                                             <option value="active" <?php echo ($is_edit && $product['status'] === 'active') ? 'selected' : ''; ?>>Active</option>
                                             <option value="inactive" <?php echo ($is_edit && $product['status'] === 'inactive') ? 'selected' : ''; ?>>Inactive</option>
                                             <option value="out_of_stock" <?php echo ($is_edit && $product['status'] === 'out_of_stock') ? 'selected' : ''; ?>>Out of Stock</option>
                                         </select>
+                                        <div class="invalid-feedback">Please select a valid status.</div>
                                     </div>
                                 </div>
 
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
-                                        <label for="price" class="form-label">Price ($) *</label>
+                                        <label for="price" class="form-label">Price ($) <span class="text-danger">*</span></label>
                                         <input type="number" step="0.01" class="form-control" id="price" name="price" 
-                                               value="<?php echo $is_edit ? $product['price'] : ''; ?>" required>
+                                               value="<?php echo $is_edit ? $product['price'] : ''; ?>" 
+                                               min="0.01" max="999999.99" required>
+                                        <div class="invalid-feedback">Price must be between 0.01 and 999999.99.</div>
                                     </div>
 
                                     <div class="col-md-4 mb-3">
                                         <label for="discount_price" class="form-label">Discount Price ($)</label>
                                         <input type="number" step="0.01" class="form-control" id="discount_price" name="discount_price" 
-                                               value="<?php echo $is_edit ? $product['discount_price'] : ''; ?>">
+                                               value="<?php echo $is_edit ? $product['discount_price'] : ''; ?>"
+                                               min="0.01" max="999999.99">
+                                        <small class="text-muted">Must be less than regular price</small>
+                                        <div class="invalid-feedback">Discount price must be valid and less than regular price.</div>
                                     </div>
 
                                     <div class="col-md-4 mb-3">
-                                        <label for="stock" class="form-label">Stock *</label>
+                                        <label for="stock" class="form-label">Stock <span class="text-danger">*</span></label>
                                         <input type="number" class="form-control" id="stock" name="stock" 
-                                               value="<?php echo $is_edit ? $product['stock'] : '0'; ?>" required>
+                                               value="<?php echo $is_edit ? $product['stock'] : '0'; ?>" 
+                                               min="0" max="1000000" required>
+                                        <div class="invalid-feedback">Stock must be a number between 0 and 1000000.</div>
                                     </div>
                                 </div>
 
@@ -237,7 +283,7 @@ include '../includes/header.php';
                                     <div class="col-md-6 mb-3">
                                         <label for="sizes" class="form-label">Sizes (comma separated)</label>
                                         <input type="text" class="form-control" id="sizes" name="sizes" 
-                                               placeholder="S,M,L,XL,XXL"
+                                               placeholder="S,M,L,XL,XXL" maxlength="255"
                                                value="<?php echo $is_edit ? htmlspecialchars($product['sizes']) : ''; ?>">
                                         <small class="text-muted">Example: S,M,L,XL</small>
                                     </div>
@@ -245,7 +291,7 @@ include '../includes/header.php';
                                     <div class="col-md-6 mb-3">
                                         <label for="colors" class="form-label">Colors (comma separated)</label>
                                         <input type="text" class="form-control" id="colors" name="colors" 
-                                               placeholder="Red,Blue,Black,White"
+                                               placeholder="Red,Blue,Black,White" maxlength="255"
                                                value="<?php echo $is_edit ? htmlspecialchars($product['colors']) : ''; ?>">
                                         <small class="text-muted">Example: Red,Blue,Black</small>
                                     </div>
