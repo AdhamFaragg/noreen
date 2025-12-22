@@ -136,12 +136,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-        } else {
-            error_log("Order insert error: " . mysqli_error($conn));
-            set_message('Error placing order. Please try again.', 'error');
-        }
-    }
-}
 
 // Get user info for prefill
 $user_query = "SELECT * FROM users WHERE user_id = {$_SESSION['user_id']}";
