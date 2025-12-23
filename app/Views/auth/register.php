@@ -6,20 +6,38 @@
                     <h3 class="mb-0">Register</h3>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="<?php echo BASE_URL; ?>?page=auth&action=handleRegister">
+                    <?php if (!empty($_SESSION['errors'])): ?>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Please fix the following errors:</strong>
+                            <ul class="mb-0 mt-2">
+                                <?php foreach ($_SESSION['errors'] as $field => $messages): ?>
+                                    <?php foreach ($messages as $message): ?>
+                                        <li><?php echo htmlspecialchars($message); ?></li>
+                                    <?php endforeach; ?>
+                                <?php endforeach; ?>
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        <?php unset($_SESSION['errors']); ?>
+                    <?php endif; ?>
+
+                    <form method="POST" action="<?php echo BASE_URL; ?>?page=auth&action=handleRegister" novalidate>
                         <div class="mb-3">
                             <label for="full_name" class="form-label">Full Name</label>
-                            <input type="text" class="form-control" id="full_name" name="full_name" required>
+                            <input type="text" class="form-control" id="full_name" name="full_name" 
+                                   value="<?php echo htmlspecialchars($_SESSION['old_input']['full_name'] ?? ''); ?>" required>
                         </div>
                         
                         <div class="mb-3">
                             <label for="email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="<?php echo htmlspecialchars($_SESSION['old_input']['email'] ?? ''); ?>" required>
                         </div>
                         
                         <div class="mb-3">
                             <label for="phone" class="form-label">Phone (Optional)</label>
-                            <input type="tel" class="form-control" id="phone" name="phone">
+                            <input type="tel" class="form-control" id="phone" name="phone"
+                                   value="<?php echo htmlspecialchars($_SESSION['old_input']['phone'] ?? ''); ?>">
                         </div>
                         
                         <div class="mb-3">
